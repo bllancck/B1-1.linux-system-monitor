@@ -1,0 +1,34 @@
+$ whoami (실행 계정)
+agent-admin  # root 실행은 앱이 거부한다
+
+$ $AGENT_HOME/agent-app-linux-x86
+>>> Starting Agent Boot Sequence...
+[1/5] Checking User Account               [OK]
+   ... Running as service user 'agent-admin' (uid=1001)
+[2/5] Verifying Environment Variables     [OK]
+   ... All required Envs correct
+[3/5] Checking Required Files             [OK]
+   ... Verified 'secret.key' with correct key string.
+[4/5] Checking Port Availability          [OK]
+   ... Port 15034 is available.
+[5/5] Verifying Log Permission            [OK]
+   ... Log directory is writable: /var/log/agent-app
+------------------------------------------------------------
+All Boot Checks Passed!
+Agent READY
+2026-08-10 17:22:07,944 [INFO] [SafetyGuard] Process priority lowered (nice=10).
+2026-08-10 17:22:07,944 [INFO] Agent listening at port 15034
+2026-08-10 17:22:07,944 [INFO] === Agent Worker Started ===
+2026-08-10 17:22:07,944 [INFO]    > Cycle: 0 -> 256MB/Lv10 -> 0
+2026-08-10 17:22:07,944 [INFO] --- Step Info: Mode=UP, CPU Lv=1, Mem=0MB ---
+2026-08-10 17:22:07,981 [INFO] [Memory] Increasing... (+25 MB) Total: 25 MB
+
+[INFO] PID: 22731 22736 
+
+$ ss -tulnp | grep 15034
+tcp   LISTEN 0      1             0.0.0.0:15034      0.0.0.0:*    users:(("agent-app-linux",pid=22736,fd=4))
+
+$ ps -o pid,ppid,user,comm,args -p $(pgrep -x agent-app-linux | paste -sd,)
+    PID    PPID USER     COMMAND         COMMAND
+  22731   22525 agent-a+ agent-app-linux /home/agent-admin/agent-app/agent-app-linux-x86
+  22736   22731 agent-a+ agent-app-linux /home/agent-admin/agent-app/agent-app-linux-x86

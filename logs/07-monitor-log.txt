@@ -1,0 +1,12 @@
+$ ls -lh $AGENT_LOG_DIR
+total 1000K
+-rw-rw-r--  1 agent-admin agent-admin 988K Aug 10 17:22 agent_app.log
+-rw-rw----  1 agent-admin agent-core     0 Aug 10 17:22 cron.log
+drwxrwx---+ 2 agent-admin agent-core  4.0K Aug 10 17:13 legacy
+-rw-rw----  1 agent-admin agent-core   257 Aug 10 17:22 monitor.log
+
+$ tail -n 10 $AGENT_LOG_DIR/monitor.log
+[2026-08-10 17:22:10] PID:22731 CPU:0.1% MEM:13.8% DISK_USED:1%
+[2026-08-10 17:22:10] [FAIL] process 'no-such-app' not running
+[2026-08-10 17:22:12] PID:22731 CPU:100.0% MEM:14.5% DISK_USED:1%
+[2026-08-10 17:22:18] PID:22731 CPU:4.7% MEM:15.7% DISK_USED:1%

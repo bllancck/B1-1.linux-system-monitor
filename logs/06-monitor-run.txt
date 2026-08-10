@@ -1,0 +1,62 @@
+$ ls -l $AGENT_HOME/bin/monitor.sh
+-rwxr-x--- 1 agent-dev agent-core 7944 Aug 10 17:18 /home/agent-admin/agent-app/bin/monitor.sh
+
+$ su - agent-admin -c '$AGENT_HOME/bin/monitor.sh'   # cron 실행 계정과 동일
+====== SYSTEM MONITOR RESULT ======
+
+[HEALTH CHECK]
+Checking process 'agent-app-linux-x86'... [OK] (PID: 22731)
+Checking port 15034... [OK]
+
+[RESOURCE MONITORING]
+CPU Usage  : 0.1%
+MEM Usage  : 13.8%
+DISK Used  : 1%
+
+[WARNING] MEM threshold exceeded (13.8% > 10%)
+
+[INFO] Log appended: /var/log/agent-app/monitor.log
+(exit code: 0)
+
+=== 권한 정책 검증: agent-test 는 agent-core 가 아니므로 실행 불가 ===
+$ su - agent-test -c '$AGENT_HOME/bin/monitor.sh'
+  -> -bash: line 1: /home/agent-admin/agent-app/bin/monitor.sh: Permission denied
+
+=== Health Check 실패 시 exit 1 검증 (존재하지 않는 프로세스명 주입) ===
+$ APP_NAME=no-such-app su - agent-admin -c '...monitor.sh'
+====== SYSTEM MONITOR RESULT ======
+
+[HEALTH CHECK]
+Checking process 'no-such-app'... [FAIL] Process not running
+(exit code: 1)
+
+=== CPU 임계값 경고 검증 (전 코어에 인위적 부하 주입) ===
+[RESOURCE MONITORING]
+CPU Usage  : 100.0%
+MEM Usage  : 14.5%
+DISK Used  : 1%
+
+[WARNING] CPU threshold exceeded (100.0% > 20%)
+[WARNING] MEM threshold exceeded (14.5% > 10%)
+
+[INFO] Log appended: /var/log/agent-app/monitor.log
+
+=== DISK 임계값 경고 검증 (현재 사용률 1% -> 임계값을 0% 로 낮춰 분기 확인) ===
+[RESOURCE MONITORING]
+CPU Usage  : 4.7%
+MEM Usage  : 15.7%
+DISK Used  : 1%
+
+[WARNING] MEM threshold exceeded (15.7% > 10%)
+[WARNING] DISK threshold exceeded (1% > 0%)
+
+[INFO] Log appended: /var/log/agent-app/monitor.log
+$ ss -tuln | grep 15034
+(LISTEN 없음 - 앱 종료 확인)
+
+$ su - agent-admin -c '$AGENT_HOME/bin/monitor.sh'; echo $?
+====== SYSTEM MONITOR RESULT ======
+
+[HEALTH CHECK]
+Checking process 'agent-app-linux-x86'... [FAIL] Process not running
+(exit code: 1)

@@ -1,0 +1,85 @@
+$ ls -ld $AGENT_HOME 및 하위
+drwxr-x---  6 agent-admin agent-common 4096 Aug 10 17:18 /home/agent-admin/agent-app
+drwxrwx---+ 2 agent-admin agent-core   4096 Aug 10 17:06 /home/agent-admin/agent-app/api_keys
+drwxr-x---  2 agent-dev   agent-core   4096 Aug 10 17:18 /home/agent-admin/agent-app/bin
+drwxrwx---+ 2 agent-admin agent-common 4096 Aug 10 17:18 /home/agent-admin/agent-app/upload_files
+drwxrwx---+ 3 agent-admin agent-core   4096 Aug 10 17:22 /var/log/agent-app
+
+$ ls -l $AGENT_HOME/api_keys $AGENT_HOME/bin
+/home/agent-admin/agent-app/api_keys:
+total 8
+-rw-r----- 1 agent-admin agent-core 19 Aug 10 17:18 secret.key
+-rw-r----- 1 agent-admin agent-core 19 Aug 10 17:18 t_secret.key
+
+/home/agent-admin/agent-app/bin:
+total 8
+-rwxr-x--- 1 agent-dev agent-core 7944 Aug 10 17:18 monitor.sh
+
+$ getfacl /home/agent-admin/agent-app/upload_files
+getfacl: Removing leading '/' from absolute path names
+# file: home/agent-admin/agent-app/upload_files
+# owner: agent-admin
+# group: agent-common
+user::rwx
+group::rwx
+group:agent-common:rwx
+mask::rwx
+other::---
+default:user::rwx
+default:group::rwx
+default:group:agent-common:rwx
+default:mask::rwx
+default:other::---
+
+
+$ getfacl /home/agent-admin/agent-app/api_keys
+getfacl: Removing leading '/' from absolute path names
+# file: home/agent-admin/agent-app/api_keys
+# owner: agent-admin
+# group: agent-core
+user::rwx
+group::rwx
+group:agent-core:rwx
+mask::rwx
+other::---
+default:user::rwx
+default:group::rwx
+default:group:agent-core:rwx
+default:mask::rwx
+default:other::---
+
+
+$ getfacl /var/log/agent-app
+getfacl: Removing leading '/' from absolute path names
+# file: var/log/agent-app
+# owner: agent-admin
+# group: agent-core
+user::rwx
+group::rwx
+group:agent-core:rwx
+mask::rwx
+other::---
+default:user::rwx
+default:group::rwx
+default:group:agent-core:rwx
+default:mask::rwx
+default:other::---
+
+
+=== 접근 통제 실증 (agent-test 는 agent-common 이지만 agent-core 는 아니다) ===
+$ su - agent-test -c 'touch $AGENT_HOME/upload_files/from-test.tmp && ls -l ...'
+  -> -rw-rw----+ 1 agent-test agent-test 0 Aug 10 17:22 /home/agent-admin/agent-app/upload_files/from-test.tmp
+$ su - agent-test -c 'ls $AGENT_HOME/api_keys'
+  -> ls: cannot open directory '/home/agent-admin/agent-app/api_keys': Permission denied
+$ su - agent-test -c 'cat $AGENT_LOG_DIR/monitor.log'
+  -> cat: /var/log/agent-app/monitor.log: Permission denied
+$ su - agent-dev -c 'head -1 $AGENT_HOME/api_keys/secret.key'
+  -> agent_api_key_test
+
+$ env | grep AGENT_  (agent-admin 로그인 셸)
+AGENT_APP_BIN=/home/agent-admin/agent-app/agent-app-linux-x86
+AGENT_HOME=/home/agent-admin/agent-app
+AGENT_KEY_PATH=/home/agent-admin/agent-app/api_keys
+AGENT_LOG_DIR=/var/log/agent-app
+AGENT_PORT=15034
+AGENT_UPLOAD_DIR=/home/agent-admin/agent-app/upload_files

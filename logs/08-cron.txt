@@ -1,0 +1,24 @@
+$ crontab -u agent-admin -l
+
+* * * * * /home/agent-admin/agent-app/bin/monitor.sh >> /var/log/agent-app/cron.log 2>&1
+
+$ systemctl is-active cron
+active
+
+=== 대기 전후 monitor.log 라인 수 ===
+2026-08-10 17:22:19    4 lines
+2026-08-10 17:24:36    6 lines  (+2)
+
+$ tail -n 5 $AGENT_LOG_DIR/monitor.log
+[2026-08-10 17:22:10] [FAIL] process 'no-such-app' not running
+[2026-08-10 17:22:12] PID:22731 CPU:100.0% MEM:14.5% DISK_USED:1%
+[2026-08-10 17:22:18] PID:22731 CPU:4.7% MEM:15.7% DISK_USED:1%
+[2026-08-10 17:23:02] PID:22731 CPU:3.7% MEM:20.0% DISK_USED:1%
+[2026-08-10 17:24:02] PID:22731 CPU:4.1% MEM:15.5% DISK_USED:1%
+
+$ journalctl -u cron --since '3 min ago' | grep agent-admin
+Aug 10 17:23:01 DESKTOP-TGOHI9Q CRON[22948]: (agent-admin) CMD (/home/agent-admin/agent-app/bin/monitor.sh >> /var/log/agent-app/cron.log 2>&1)
+Aug 10 17:23:02 DESKTOP-TGOHI9Q CRON[22947]: pam_unix(cron:session): session closed for user agent-admin
+Aug 10 17:24:01 DESKTOP-TGOHI9Q CRON[22986]: pam_unix(cron:session): session opened for user agent-admin(uid=1001) by agent-admin(uid=0)
+Aug 10 17:24:01 DESKTOP-TGOHI9Q CRON[22987]: (agent-admin) CMD (/home/agent-admin/agent-app/bin/monitor.sh >> /var/log/agent-app/cron.log 2>&1)
+Aug 10 17:24:02 DESKTOP-TGOHI9Q CRON[22986]: pam_unix(cron:session): session closed for user agent-admin

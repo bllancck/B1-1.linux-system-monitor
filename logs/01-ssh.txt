@@ -1,0 +1,19 @@
+$ grep -E '^(Port|PermitRootLogin)' /etc/ssh/sshd_config
+Port 20022
+PermitRootLogin no
+
+$ sshd -T | grep -E '^(port|permitrootlogin) '
+port 20022
+permitrootlogin no
+
+$ ss -tulnp | grep sshd
+tcp   LISTEN 0      4096          0.0.0.0:20022      0.0.0.0:*    users:(("systemd",pid=1,fd=94))          
+tcp   LISTEN 0      4096             [::]:20022         [::]:*    users:(("systemd",pid=1,fd=95))          
+
+$ systemctl status ssh.socket --no-pager
+● ssh.socket - OpenBSD Secure Shell server socket
+     Loaded: loaded (/usr/lib/systemd/system/ssh.socket; enabled; preset: enabled)
+    Drop-In: /run/systemd/generator/ssh.socket.d
+             └─addresses.conf
+     Active: active (listening) since Mon 2026-08-10 17:13:10 KST; 8min ago
+   Triggers: ● ssh.service

@@ -1,0 +1,24 @@
+$ ufw status verbose
+Status: active
+Logging: on (low)
+Default: deny (incoming), allow (outgoing), disabled (routed)
+New profiles: skip
+
+To                         Action      From
+--                         ------      ----
+20022/tcp                  ALLOW IN    Anywhere                  
+15034/tcp                  ALLOW IN    Anywhere                  
+20022/tcp (v6)             ALLOW IN    Anywhere (v6)             
+15034/tcp (v6)             ALLOW IN    Anywhere (v6)             
+
+
+$ ufw status numbered
+Status: active
+
+     To                         Action      From
+     --                         ------      ----
+[ 1] 20022/tcp                  ALLOW IN    Anywhere                  
+[ 2] 15034/tcp                  ALLOW IN    Anywhere                  
+[ 3] 20022/tcp (v6)             ALLOW IN    Anywhere (v6)             
+[ 4] 15034/tcp (v6)             ALLOW IN    Anywhere (v6)             
+

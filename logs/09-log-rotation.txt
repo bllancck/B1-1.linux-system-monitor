@@ -1,0 +1,46 @@
+정책: 파일 하나가 10MB 를 넘으면 .1~.9 로 밀어내고 총 10개만 유지한다.
+
+=== 실행 전 ===
+total 11M
+-rwxrwxrwx 1 root root 11M Aug 10 17:24 monitor.log
+-rwxrwxrwx 1 root root  10 Aug 10 17:24 monitor.log.1
+-rwxrwxrwx 1 root root  10 Aug 10 17:24 monitor.log.2
+-rwxrwxrwx 1 root root  10 Aug 10 17:24 monitor.log.3
+-rwxrwxrwx 1 root root  10 Aug 10 17:24 monitor.log.4
+-rwxrwxrwx 1 root root  10 Aug 10 17:24 monitor.log.5
+-rwxrwxrwx 1 root root  10 Aug 10 17:24 monitor.log.6
+-rwxrwxrwx 1 root root  10 Aug 10 17:24 monitor.log.7
+-rwxrwxrwx 1 root root  10 Aug 10 17:24 monitor.log.8
+-rwxrwxrwx 1 root root  10 Aug 10 17:24 monitor.log.9
+
+$ AGENT_LOG_DIR=/tmp/rotate-demo su - agent-admin -c '...monitor.sh'
+[INFO] Rotated: /tmp/rotate-demo/monitor.log (>= 10MB, keep 10 files)
+====== SYSTEM MONITOR RESULT ======
+
+[HEALTH CHECK]
+Checking process 'agent-app-linux-x86'... [OK] (PID: 22731)
+Checking port 15034... [OK]
+
+[RESOURCE MONITORING]
+CPU Usage  : 3.7%
+MEM Usage  : 19.5%
+DISK Used  : 1%
+
+
+=== 실행 후 ===
+total 11M
+-rw-rw-r-- 1 agent-admin agent-admin  64 Aug 10 17:24 monitor.log
+-rwxrwxrwx 1 root        root        11M Aug 10 17:24 monitor.log.1
+-rwxrwxrwx 1 root        root         10 Aug 10 17:24 monitor.log.2
+-rwxrwxrwx 1 root        root         10 Aug 10 17:24 monitor.log.3
+-rwxrwxrwx 1 root        root         10 Aug 10 17:24 monitor.log.4
+-rwxrwxrwx 1 root        root         10 Aug 10 17:24 monitor.log.5
+-rwxrwxrwx 1 root        root         10 Aug 10 17:24 monitor.log.6
+-rwxrwxrwx 1 root        root         10 Aug 10 17:24 monitor.log.7
+-rwxrwxrwx 1 root        root         10 Aug 10 17:24 monitor.log.8
+-rwxrwxrwx 1 root        root         10 Aug 10 17:24 monitor.log.9
+
+파일 개수: 10 개
+가장 오래된 아카이브(.9) 내용: archive-8
+새 monitor.log 내용:
+[2026-08-10 17:24:37] PID:22731 CPU:3.7% MEM:19.5% DISK_USED:1%
