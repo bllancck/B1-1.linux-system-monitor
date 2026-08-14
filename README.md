@@ -130,44 +130,40 @@ sudo bash scripts/run-app.sh --stop
 
 #### 사용자와 그룹
 
-사용자를 역할에 따라 세 계정으로 나누고, 접근할 수 있는 영역에 따라 두 그룹에 배치했습니다.
+사용자를 역할에 따라 나누고, 공유 영역과 보호 영역에 필요한 그룹만 부여했습니다.
 
-| 계정 | 역할 | 소속 그룹 |
-|------|------|-----------|
-| `agent-admin` | 앱 운영, cron 실행 | `agent-common`, `agent-core` |
-| `agent-dev` | 관제 스크립트 작성·수정 | `agent-common`, `agent-core` |
-| `agent-test` | 업로드 기능 테스트 | `agent-common` |
+| 계정 | 역할 | `agent-common`<br>(공유 영역) | `agent-core`<br>(보호 영역) |
+|------|------|:----------------------------:|:--------------------------:|
+| `agent-admin` | 앱 운영, cron 실행 | 소속 | 소속 |
+| `agent-dev` | 관제 스크립트 작성·수정 | 소속 | 소속 |
+| `agent-test` | 업로드 기능 테스트 | 소속 | — |
 
-| 그룹 | 구성원 | 주요 접근 영역 |
-|------|--------|-----------|
-| `agent-common` | `agent-admin`, `agent-dev`, `agent-test` | 모두가 사용하는 `upload_files` |
-| `agent-core` | `agent-admin`, `agent-dev` | 키 파일, 관제 스크립트, 운영 로그 |
+`agent-common`은 세 계정이 함께 쓰는 업로드 영역에, `agent-core`는 admin과 dev만 사용하는 키·스크립트·로그 영역에 적용됩니다.
 
-`agent-test`는 `agent-core`에 속하지 않으므로 키 파일과 운영 로그에 접근하거나 관제 스크립트를 실행할 수 없습니다.
+#### 주요 디렉토리 권한
 
-#### 경로별 접근 권한
+| 경로 | 소유자:그룹 | 모드 | 추가 ACL | 용도 |
+|------|-------------|:----:|----------|------|
+| `/home/agent-admin` | `agent-admin:agent-admin` | 750 | `agent-common:x` | 앱 경로로 이동하기 위한 상위 디렉토리 |
+| `$AGENT_HOME` | `agent-admin:agent-common` | 750 | — | 앱 관련 파일의 기준 경로 |
+| `$AGENT_HOME/upload_files` | `agent-admin:agent-common` | 770 | `agent-common:rwx` 및 기본 ACL | 세 계정의 공유 파일 영역 |
+| `$AGENT_HOME/api_keys` | `agent-admin:agent-core` | 770 | `agent-core:rwx` 및 기본 ACL | 키 파일 보관 |
+| `$AGENT_HOME/bin`과 `monitor.sh` | `agent-dev:agent-core` | 750 | — | 관제 스크립트 보관·실행 |
+| `/var/log/agent-app` | `agent-admin:agent-core` | 770 | `agent-core:rwx` 및 기본 ACL | 관제 및 cron 로그 보관 |
 
-| 경로 | admin | dev | test | 용도 |
-|------|:-----:|:---:|:----:|------|
-| `/home/agent-admin` | 조회·이동·수정 | 통과만 가능 | 통과만 가능 | 앱 디렉토리로 이동하기 위한 상위 경로 |
-| `$AGENT_HOME` | 조회·이동·수정 | 조회·이동 | 조회·이동 | 앱과 관련 디렉토리가 모인 위치 |
-| `$AGENT_HOME/upload_files` | 읽기·쓰기 | 읽기·쓰기 | 읽기·쓰기 | 세 계정의 공유 파일 영역 |
-| `$AGENT_HOME/api_keys` | 읽기·쓰기 | 읽기·쓰기 | 접근 불가 | 키 파일 보관 |
-| `$AGENT_HOME/bin/monitor.sh` | 읽기·실행 | 읽기·쓰기·실행 | 접근 불가 | 관제 스크립트 |
-| `/var/log/agent-app` | 읽기·쓰기 | 읽기·쓰기 | 접근 불가 | 관제 및 cron 로그 보관 |
+`750`은 소유자만 수정할 수 있고 그룹은 읽기·실행만 가능하며, `770`은 소유자와 그룹 모두 읽기·쓰기·실행이 가능하다는 뜻입니다. 두 모드 모두 그 외 계정의 접근은 차단합니다.
 
 <details>
-<summary><b>실제 소유자·그룹·권한 값 보기</b></summary>
+<summary><b>계정별로 가능한 작업 보기</b></summary>
 
-| 경로 | 소유자:그룹 | 모드 | 추가 ACL |
-|------|-------------|:----:|----------|
-| `/home/agent-admin` | `agent-admin:agent-admin` | 750 | `agent-common`에 통과 권한 `x` |
-| `$AGENT_HOME` | `agent-admin:agent-common` | 750 | — |
-| `$AGENT_HOME/upload_files` | `agent-admin:agent-common` | 770 | `agent-common:rwx` 및 기본 ACL |
-| `$AGENT_HOME/api_keys` | `agent-admin:agent-core` | 770 | `agent-core:rwx` 및 기본 ACL |
-| `$AGENT_HOME/bin` | `agent-dev:agent-core` | 750 | — |
-| `$AGENT_HOME/bin/monitor.sh` | `agent-dev:agent-core` | 750 | — |
-| `/var/log/agent-app` | `agent-admin:agent-core` | 770 | `agent-core:rwx` 및 기본 ACL |
+| 경로 | admin | dev | test |
+|------|:-----:|:---:|:----:|
+| `/home/agent-admin` | 조회·이동·수정 | 통과만 가능 | 통과만 가능 |
+| `$AGENT_HOME` | 조회·이동·수정 | 조회·이동 | 조회·이동 |
+| `$AGENT_HOME/upload_files` | 읽기·쓰기 | 읽기·쓰기 | 읽기·쓰기 |
+| `$AGENT_HOME/api_keys` | 읽기·쓰기 | 읽기·쓰기 | 접근 불가 |
+| `$AGENT_HOME/bin/monitor.sh` | 읽기·실행 | 읽기·쓰기·실행 | 접근 불가 |
+| `/var/log/agent-app` | 읽기·쓰기 | 읽기·쓰기 | 접근 불가 |
 
 </details>
 
