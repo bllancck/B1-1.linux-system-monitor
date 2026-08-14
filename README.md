@@ -250,15 +250,23 @@ sudo bash scripts/collect-evidence.sh
 </details>
 
 <details>
-<summary><b>2. 홈 디렉토리를 755로 열지 않고 ACL을 사용한 이유</b></summary>
+<summary><b>2. 필요한 계정만 홈 디렉토리를 통과하도록 ACL을 사용한 이유</b></summary>
 
-`upload_files`를 770으로 설정해도 상위 경로인 `/home/agent-admin`을 통과할 수 없으면 `agent-test`는 접근하지 못합니다. 홈을 755로 열면 모든 시스템 계정이 목록을 읽을 수 있으므로, `agent-common`에 통과 권한 `x`만 추가했습니다.
+Linux에서는 대상 디렉토리뿐 아니라 그 위의 모든 디렉토리에 통과 권한 `x`가 있어야 접근할 수 있습니다. 따라서 `upload_files`의 권한만 열어서는 `agent-test`가 접근할 수 없습니다.
+
+| 설정 방법 | 결과 |
+|-----------|------|
+| `upload_files`만 770으로 설정 | 상위 경로인 `/home/agent-admin`을 통과하지 못해 접근 실패 |
+| `/home/agent-admin`을 755로 변경 | 접근은 가능하지만 프로젝트와 관계없는 시스템 계정도 홈 목록을 볼 수 있음 |
+| `agent-common`에 ACL `x`만 부여 | 프로젝트 계정만 홈 목록을 보지 않고 하위 경로로 통과 가능 |
+
+그래서 홈 디렉토리의 기존 권한은 유지하고 `agent-common`에 통과 권한만 추가했습니다.
 
 ```bash
 setfacl -m g:agent-common:x /home/agent-admin
 ```
 
-공유·보안 디렉토리에는 기본 ACL도 설정했습니다. 이후 생성되는 파일이 자동으로 그룹 정책을 상속하므로 파일마다 권한을 다시 수정하는 누락 위험을 줄입니다.
+`upload_files`, `api_keys`, 로그 디렉토리에는 기본 ACL도 설정했습니다. 이후 생성되는 파일은 해당 디렉토리의 그룹 권한을 자동으로 이어받으므로, 새 파일마다 권한을 다시 설정할 필요가 없습니다.
 
 </details>
 
