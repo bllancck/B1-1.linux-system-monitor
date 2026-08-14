@@ -236,7 +236,7 @@ sudo bash scripts/collect-evidence.sh
 
 ## 핵심 설계 결정
 
-완성 결과보다 구현 이유가 중요한 내용만 남겼습니다. 세부 명령어와 전체 출력은 각 스크립트와 [`logs/`](./logs)에서 확인할 수 있습니다.
+완성 결과보다 구현 이유가 중요한 내용만 남겼습니다.
 
 <details>
 <summary><b>1. SSH 설정을 추가하지 않고 기존 지시자를 제거한 이유</b></summary>
