@@ -1,8 +1,8 @@
 # Linux 서버 보안 및 관제 자동화
 
-리눅스 서버의 **보안 설정, 사용자 권한 관리, 애플리케이션 실행, 상태 점검**을 자동화한 프로젝트입니다. SSH와 방화벽을 구성하고 계정별 접근 권한을 나눈 뒤, 앱의 프로세스·포트·CPU·메모리·디스크 사용량을 매분 확인해 로그로 남깁니다.
+리눅스 서버의 <b>보안 설정, 사용자 권한 관리, 애플리케이션 실행, 상태 점검</b>을 자동화한 프로젝트입니다. SSH와 방화벽을 구성하고 계정별 접근 권한을 나눈 뒤, 앱의 프로세스·포트·CPU·메모리·디스크 사용량을 매분 확인해 로그로 남깁니다.
 
-> **서버 보호 → 사용자별 권한 분리 → 앱 실행 → 1분마다 상태 점검 → 로그 자동 정리**
+> <b>서버 보호 → 사용자별 권한 분리 → 앱 실행 → 1분마다 상태 점검 → 로그 자동 정리</b>
 
 [빠른 실행](#빠른-실행) · [구성 요소와 동작](#구성-요소와-동작) · [검증 결과](#검증-결과) · [핵심 설계 결정](#핵심-설계-결정)
 
@@ -12,15 +12,15 @@
 
 | 순서 | 자동화한 일 | 결과 |
 |:----:|-------------|------|
-| 1 | **서버 보호** | SSH 접속 포트를 `20022`로 변경하고 Root 로그인을 막습니다. 방화벽은 SSH와 앱 포트만 엽니다. |
-| 2 | **권한 분리** | 운영자·개발자·테스트 계정을 나누고, 각 계정이 필요한 파일에만 접근하도록 제한합니다. |
-| 3 | **앱 실행** | 실행 환경을 한 곳에서 관리하고, Root가 아닌 `agent-admin` 계정으로 앱을 실행합니다. |
-| 4 | **상태 점검** | 앱 프로세스와 포트를 확인하고 CPU·메모리·디스크 사용률이 기준을 넘으면 경고합니다. |
-| 5 | **자동 관리** | 1분마다 상태를 점검하고, 로그가 커지면 오래된 파일부터 자동으로 정리합니다. |
+| 1 | <b>서버 보호</b> | SSH 접속 포트를 `20022`로 변경하고 Root 로그인을 막습니다. 방화벽은 SSH와 앱 포트만 엽니다. |
+| 2 | <b>권한 분리</b> | 운영자·개발자·테스트 계정을 나누고, 각 계정이 필요한 파일에만 접근하도록 제한합니다. |
+| 3 | <b>앱 실행</b> | 실행 환경을 한 곳에서 관리하고, Root가 아닌 `agent-admin` 계정으로 앱을 실행합니다. |
+| 4 | <b>상태 점검</b> | 앱 프로세스와 포트를 확인하고 CPU·메모리·디스크 사용률이 기준을 넘으면 경고합니다. |
+| 5 | <b>자동 관리</b> | 1분마다 상태를 점검하고, 로그가 커지면 오래된 파일부터 자동으로 정리합니다. |
 
 모든 과정은 Bash 스크립트로 다시 실행할 수 있으며, 정상 동작과 실패 상황을 [9개의 원본 로그](./logs)로 검증했습니다.
 
-**실행 환경:** Ubuntu 24.04.4 LTS (WSL2, systemd) · x86_64 · Bash · UFW · cron · POSIX ACL
+<b>실행 환경:</b> Ubuntu 24.04.4 LTS (WSL2, systemd) · x86_64 · Bash · UFW · cron · POSIX ACL
 
 ---
 
@@ -47,7 +47,7 @@ DISK Used  : 1%
 ## 빠른 실행
 
 > [!CAUTION]
-> `setup-security.sh`를 실행하면 기존 방화벽 규칙을 지우고 이 프로젝트에 필요한 규칙으로 다시 설정하며, SSH 접속 포트를 `20022`로 변경합니다. SSH로 원격 접속 중이라면 연결이 끊기거나 다시 접속하지 못할 수 있으므로, 클라우드 웹 콘솔처럼 **SSH 없이 서버에 접속할 방법**을 준비한 뒤 실행하세요. 기존 SSH 설정 파일은 자동으로 백업됩니다.
+> `setup-security.sh`를 실행하면 기존 방화벽 규칙을 지우고 이 프로젝트에 필요한 규칙으로 다시 설정하며, SSH 접속 포트를 `20022`로 변경합니다. SSH로 원격 접속 중이라면 연결이 끊기거나 다시 접속하지 못할 수 있으므로, 클라우드 웹 콘솔처럼 <b>SSH 없이 서버에 접속할 방법</b>을 준비한 뒤 실행하세요. 기존 SSH 설정 파일은 자동으로 백업됩니다.
 
 ### 필수 실행: 3단계
 
@@ -70,7 +70,7 @@ sudo bash scripts/setup-agent.sh
 sudo bash scripts/run-app.sh --detach
 ```
 
-출력 마지막에 **`Agent READY`**가 표시되면 정상입니다.
+출력 마지막에 <b><code>Agent READY</code></b>가 표시되면 정상입니다.
 
 #### 3. 관제 동작 확인
 
@@ -80,23 +80,23 @@ sudo bash scripts/run-app.sh --detach
 sudo su - agent-admin -c '$AGENT_HOME/bin/monitor.sh'
 ```
 
-프로세스와 포트에 **`[OK]`**가 표시되고, 마지막에 **`Log appended`**가 나오면 정상입니다. 이후 cron이 같은 점검을 1분마다 자동 실행합니다.
+프로세스와 포트에 <b><code>[OK]</code></b>가 표시되고, 마지막에 <b><code>Log appended</code></b>가 나오면 정상입니다. 이후 cron이 같은 점검을 1분마다 자동 실행합니다.
 
 ### 필요할 때 사용하는 명령
 
-**실시간 관제 로그 확인**
+<b>실시간 관제 로그 확인</b>
 
 ```bash
 sudo tail -f /var/log/agent-app/monitor.log
 ```
 
-**전체 검증 결과 다시 수집** — 약 3분이 걸리며 `logs/*.txt`를 갱신합니다.
+<b>전체 검증 결과 다시 수집</b> — 약 3분이 걸리며 `logs/*.txt`를 갱신합니다.
 
 ```bash
 sudo bash scripts/collect-evidence.sh
 ```
 
-**백그라운드 앱 종료**
+<b>백그라운드 앱 종료</b>
 
 ```bash
 sudo bash scripts/run-app.sh --stop
@@ -187,7 +187,7 @@ Health Check는 이후 측정의 전제이므로 실패 시 종료합니다. 방
 ### 주요 검증 요약
 
 <details>
-<summary><strong>앱 부트와 포트 LISTEN</strong></summary>
+<summary><b>앱 부트와 포트 LISTEN</b></summary>
 
 ```text
 [1/5] Checking User Account               [OK]
@@ -204,7 +204,7 @@ tcp LISTEN 0 1 0.0.0.0:15034 0.0.0.0:*
 </details>
 
 <details>
-<summary><strong>접근 제어 실증</strong></summary>
+<summary><b>접근 제어 실증</b></summary>
 
 | 시도 | 기대 | 결과 |
 |------|:----:|------|
@@ -217,7 +217,7 @@ tcp LISTEN 0 1 0.0.0.0:15034 0.0.0.0:*
 </details>
 
 <details>
-<summary><strong>관제 경고와 실패 분기</strong></summary>
+<summary><b>관제 경고와 실패 분기</b></summary>
 
 | 분기 | 검증 방법 | 확인 결과 |
 |------|-----------|-----------|
@@ -229,7 +229,7 @@ tcp LISTEN 0 1 0.0.0.0:15034 0.0.0.0:*
 </details>
 
 <details>
-<summary><strong>cron과 로그 보존</strong></summary>
+<summary><b>cron과 로그 보존</b></summary>
 
 `agent-admin`의 crontab에 아래 항목을 등록하고, 2분 30초 동안 로그가 두 번 추가되는 것을 확인했습니다.
 
@@ -244,7 +244,7 @@ tcp LISTEN 0 1 0.0.0.0:15034 0.0.0.0:*
 | `monitor.log` | 11MB | 새 로그 파일 |
 | `monitor.log.1` | `archive-1` | 직전 11MB 파일 |
 | `monitor.log.9` | `archive-9` | `archive-8` |
-| 총 파일 수 | 10 | **10** |
+| 총 파일 수 | 10 | <b>10</b> |
 
 </details>
 
@@ -255,7 +255,7 @@ tcp LISTEN 0 1 0.0.0.0:15034 0.0.0.0:*
 완성 결과보다 구현 이유가 중요한 내용만 남겼습니다. 세부 명령어와 전체 출력은 각 스크립트와 [`logs/`](./logs)에서 확인할 수 있습니다.
 
 <details>
-<summary><strong>1. SSH 설정을 추가하지 않고 기존 지시자를 제거한 이유</strong></summary>
+<summary><b>1. SSH 설정을 추가하지 않고 기존 지시자를 제거한 이유</b></summary>
 
 `Port`는 마지막 값으로 단순 덮어쓰기 되는 설정이 아니라 여러 포트를 동시에 열 수 있는 누적 지시자입니다. 기존 `Port 22`를 남기고 `Port 20022`만 추가하면 두 포트가 모두 열리므로, 기존 `Port`와 `PermitRootLogin` 줄을 제거한 뒤 원하는 값을 한 번만 기록했습니다.
 
@@ -266,7 +266,7 @@ Ubuntu의 소켓 활성화 환경에서는 `systemd`가 SSH 포트를 먼저 엽
 </details>
 
 <details>
-<summary><strong>2. 홈 디렉토리를 755로 열지 않고 ACL을 사용한 이유</strong></summary>
+<summary><b>2. 홈 디렉토리를 755로 열지 않고 ACL을 사용한 이유</b></summary>
 
 `upload_files`를 770으로 설정해도 상위 경로인 `/home/agent-admin`을 통과할 수 없으면 `agent-test`는 접근하지 못합니다. 홈을 755로 열면 모든 시스템 계정이 목록을 읽을 수 있으므로, `agent-common`에 통과 권한 `x`만 추가했습니다.
 
@@ -279,9 +279,9 @@ setfacl -m g:agent-common:x /home/agent-admin
 </details>
 
 <details>
-<summary><strong>3. 명세와 바이너리의 키 경로 해석 차이를 함께 수용한 이유</strong></summary>
+<summary><b>3. 명세와 바이너리의 키 경로 해석 차이를 함께 수용한 이유</b></summary>
 
-과제 명세는 `AGENT_KEY_PATH`를 `$AGENT_HOME/api_keys/t_secret.key`로 안내하지만, 제공된 바이너리는 이 값을 파일이 아닌 **디렉토리 경로**로 검사하고 그 안의 **`secret.key`**를 읽습니다.
+과제 명세는 `AGENT_KEY_PATH`를 `$AGENT_HOME/api_keys/t_secret.key`로 안내하지만, 제공된 바이너리는 이 값을 파일이 아닌 <b>디렉토리 경로</b>로 검사하고 그 안의 <b><code>secret.key</code></b>를 읽습니다.
 
 | 설정 | 앱의 실제 반응 |
 |------|----------------|
@@ -295,20 +295,20 @@ setfacl -m g:agent-common:x /home/agent-admin
 </details>
 
 <details>
-<summary><strong>4. 관제 지표와 PID를 직접 판정한 이유</strong></summary>
+<summary><b>4. 관제 지표와 PID를 직접 판정한 이유</b></summary>
 
-- **PID:** `pgrep -f`는 앱을 감싼 `su`와 `bash`까지 찾습니다. 커널의 15자 `comm` 이름과 정확히 일치하는 `pgrep -x`로 앱만 선택하고, PyInstaller의 부모·워커 2단 구조에서는 부모 프로세스를 대표 PID로 기록합니다.
-- **CPU:** `top -bn1`의 첫 값 대신 `/proc/stat`을 1초 간격으로 두 번 읽어 해당 구간의 사용률을 계산합니다.
-- **메모리:** 회수 가능한 캐시를 사용량으로 과대 계산하지 않도록 `(MemTotal - MemAvailable) / MemTotal`을 사용합니다.
-- **방화벽:** cron 실행자인 일반 계정은 `ufw status`를 실행할 수 없어 `/etc/ufw/ufw.conf`와 systemd 서비스 상태를 함께 확인합니다.
-- **소수 비교:** 셸의 정수 비교 대신 `awk`를 사용해 `15.7 > 10` 같은 임계값을 정확히 판정합니다.
+- <b>PID:</b> `pgrep -f`는 앱을 감싼 `su`와 `bash`까지 찾습니다. 커널의 15자 `comm` 이름과 정확히 일치하는 `pgrep -x`로 앱만 선택하고, PyInstaller의 부모·워커 2단 구조에서는 부모 프로세스를 대표 PID로 기록합니다.
+- <b>CPU:</b> `top -bn1`의 첫 값 대신 `/proc/stat`을 1초 간격으로 두 번 읽어 해당 구간의 사용률을 계산합니다.
+- <b>메모리:</b> 회수 가능한 캐시를 사용량으로 과대 계산하지 않도록 `(MemTotal - MemAvailable) / MemTotal`을 사용합니다.
+- <b>방화벽:</b> cron 실행자인 일반 계정은 `ufw status`를 실행할 수 없어 `/etc/ufw/ufw.conf`와 systemd 서비스 상태를 함께 확인합니다.
+- <b>소수 비교:</b> 셸의 정수 비교 대신 `awk`를 사용해 `15.7 > 10` 같은 임계값을 정확히 판정합니다.
 
 </details>
 
 <details>
-<summary><strong>5. cron 환경과 테스트용 환경 변수 주입을 모두 지원한 이유</strong></summary>
+<summary><b>5. cron 환경과 테스트용 환경 변수 주입을 모두 지원한 이유</b></summary>
 
-cron에는 로그인 셸의 `AGENT_*` 변수가 전달되지 않으므로 `monitor.sh`가 환경 파일을 직접 읽습니다. 다만 무조건 덮어쓰면 테스트 값을 주입할 수 없기 때문에 **호출자가 지정한 값 → 환경 파일 값 → 스크립트 기본값** 순으로 우선순위를 정했습니다.
+cron에는 로그인 셸의 `AGENT_*` 변수가 전달되지 않으므로 `monitor.sh`가 환경 파일을 직접 읽습니다. 다만 무조건 덮어쓰면 테스트 값을 주입할 수 없기 때문에 <b>호출자가 지정한 값 → 환경 파일 값 → 스크립트 기본값</b> 순으로 우선순위를 정했습니다.
 
 이 구조 덕분에 실제 운영 로그를 건드리지 않고 다음처럼 분기와 로테이션을 검증할 수 있습니다.
 
@@ -319,7 +319,7 @@ AGENT_LOG_DIR=/tmp/rotate-demo DISK_THRESHOLD=0 monitor.sh
 </details>
 
 <details>
-<summary><strong>6. logrotate 대신 스크립트에서 보존 정책을 적용한 이유</strong></summary>
+<summary><b>6. logrotate 대신 스크립트에서 보존 정책을 적용한 이유</b></summary>
 
 `monitor.sh`는 매분 실행되는 고정 진입점이므로 별도 스케줄을 추가하지 않고도 실행 전 로그 크기를 확인할 수 있습니다. 관제 결과인 `monitor.log`뿐 아니라 표준 출력이 쌓이는 `cron.log`에도 같은 정책을 적용해, 관제 기능 자체가 디스크를 채우는 일을 막았습니다.
 
