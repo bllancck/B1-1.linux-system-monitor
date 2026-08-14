@@ -49,41 +49,58 @@ DISK Used  : 1%
 > [!CAUTION]
 > `setup-security.sh`는 기존 방화벽 규칙을 초기화하고 SSH 포트를 변경합니다. 원격 서버에서는 현재 SSH 연결이 끊길 수 있으므로 콘솔 접속 수단을 먼저 확보하세요. 기존 SSH 설정은 자동으로 백업됩니다.
 
-저장소 루트에서 다음 순서로 실행합니다.
+### 필수 실행: 3단계
+
+#### 1. 서버 보안과 앱 실행 환경 구성
+
+SSH·방화벽을 먼저 설정한 뒤 계정·권한·환경 변수·앱·cron을 배포합니다.
 
 ```bash
-# 1. SSH·방화벽 구성
 sudo bash scripts/setup-security.sh
-
-# 2. 계정·그룹·ACL·환경 변수·앱·cron 구성
 sudo bash scripts/setup-agent.sh
+```
 
-# 3. 앱을 agent-admin 계정으로 백그라운드 실행
+> 두 스크립트는 다시 실행해도 같은 설정으로 수렴합니다.
+
+#### 2. 애플리케이션 실행
+
+`agent-admin` 계정으로 앱을 백그라운드에서 실행합니다.
+
+```bash
 sudo bash scripts/run-app.sh --detach
+```
 
-# 4. 관제 스크립트 수동 확인
+출력 마지막에 **`Agent READY`**가 표시되면 정상입니다.
+
+#### 3. 관제 동작 확인
+
+관제 스크립트를 한 번 직접 실행해 프로세스·포트·자원 사용량을 확인합니다.
+
+```bash
 sudo su - agent-admin -c '$AGENT_HOME/bin/monitor.sh'
 ```
 
-관제 로그는 다음 경로에 누적됩니다.
+프로세스와 포트에 **`[OK]`**가 표시되고, 마지막에 **`Log appended`**가 나오면 정상입니다. 이후 cron이 같은 점검을 1분마다 자동 실행합니다.
+
+### 필요할 때 사용하는 명령
+
+**실시간 관제 로그 확인**
 
 ```bash
 sudo tail -f /var/log/agent-app/monitor.log
 ```
 
-전체 검증 결과를 다시 수집하려면 아래 명령을 실행합니다. 약 3분이 걸리며 `logs/*.txt`를 갱신합니다.
+**전체 검증 결과 다시 수집** — 약 3분이 걸리며 `logs/*.txt`를 갱신합니다.
 
 ```bash
 sudo bash scripts/collect-evidence.sh
 ```
 
-백그라운드 앱 종료:
+**백그라운드 앱 종료**
 
 ```bash
 sudo bash scripts/run-app.sh --stop
 ```
-
-두 setup 스크립트는 반복 실행해도 같은 설정으로 수렴하도록 작성했습니다.
 
 ---
 
