@@ -121,23 +121,55 @@ sudo bash scripts/run-app.sh --stop
 
 ### 보안과 권한 정책
 
-| 대상 | 정책 | 목적 |
+#### 서버 접속 정책
+
+| 대상 | 설정 | 결과 |
 |------|------|------|
-| SSH | `Port 20022`, `PermitRootLogin no` | 기본 스캔 노출을 줄이고 최고 권한 계정의 직접 로그인을 차단 |
-| UFW | incoming 기본 차단, `20022/tcp`·`15034/tcp`만 허용 | 필요한 진입점만 명시적으로 개방 |
-| `agent-admin` | 운영·관리, 앱과 cron 실행 | 서비스 실행 주체 |
-| `agent-dev` | `monitor.sh` 소유·수정 | 작성자와 실행자 분리 |
-| `agent-test` | 공유 업로드 영역만 접근 | 보안 파일·로그·관제 스크립트 접근 차단 |
+| SSH | 포트 `20022`, Root 로그인 금지 | 변경된 포트로 일반 계정만 접속 가능 |
+| 방화벽 | 들어오는 연결은 기본 차단 | SSH `20022`와 앱 `15034` 포트만 접속 가능 |
 
-주요 디렉토리 권한은 다음과 같습니다.
+#### 사용자와 그룹
 
-| 경로 | 소유자:그룹 | 모드 | 접근 정책 |
-|------|-------------|:----:|-----------|
-| `/home/agent-admin` | `agent-admin:agent-admin` | 750 | `agent-common`에 ACL `x`만 부여 |
-| `$AGENT_HOME/upload_files` | `agent-admin:agent-common` | 770 | admin·dev·test 공유 R/W, 기본 ACL 상속 |
-| `$AGENT_HOME/api_keys` | `agent-admin:agent-core` | 770 | admin·dev만 R/W, test 차단 |
-| `$AGENT_HOME/bin` | `agent-dev:agent-core` | 750 | dev 소유, admin 실행 |
-| `/var/log/agent-app` | `agent-admin:agent-core` | 770 | admin·dev만 R/W, test 차단 |
+사용자를 역할에 따라 세 계정으로 나누고, 접근할 수 있는 영역에 따라 두 그룹에 배치했습니다.
+
+| 계정 | 역할 | 소속 그룹 |
+|------|------|-----------|
+| `agent-admin` | 앱 운영, cron 실행 | `agent-common`, `agent-core` |
+| `agent-dev` | 관제 스크립트 작성·수정 | `agent-common`, `agent-core` |
+| `agent-test` | 업로드 기능 테스트 | `agent-common` |
+
+| 그룹 | 구성원 | 주요 접근 영역 |
+|------|--------|-----------|
+| `agent-common` | `agent-admin`, `agent-dev`, `agent-test` | 모두가 사용하는 `upload_files` |
+| `agent-core` | `agent-admin`, `agent-dev` | 키 파일, 관제 스크립트, 운영 로그 |
+
+`agent-test`는 `agent-core`에 속하지 않으므로 키 파일과 운영 로그에 접근하거나 관제 스크립트를 실행할 수 없습니다.
+
+#### 경로별 접근 권한
+
+| 경로 | admin | dev | test | 용도 |
+|------|:-----:|:---:|:----:|------|
+| `/home/agent-admin` | 조회·이동·수정 | 통과만 가능 | 통과만 가능 | 앱 디렉토리로 이동하기 위한 상위 경로 |
+| `$AGENT_HOME` | 조회·이동·수정 | 조회·이동 | 조회·이동 | 앱과 관련 디렉토리가 모인 위치 |
+| `$AGENT_HOME/upload_files` | 읽기·쓰기 | 읽기·쓰기 | 읽기·쓰기 | 세 계정의 공유 파일 영역 |
+| `$AGENT_HOME/api_keys` | 읽기·쓰기 | 읽기·쓰기 | 접근 불가 | 키 파일 보관 |
+| `$AGENT_HOME/bin/monitor.sh` | 읽기·실행 | 읽기·쓰기·실행 | 접근 불가 | 관제 스크립트 |
+| `/var/log/agent-app` | 읽기·쓰기 | 읽기·쓰기 | 접근 불가 | 관제 및 cron 로그 보관 |
+
+<details>
+<summary><b>실제 소유자·그룹·권한 값 보기</b></summary>
+
+| 경로 | 소유자:그룹 | 모드 | 추가 ACL |
+|------|-------------|:----:|----------|
+| `/home/agent-admin` | `agent-admin:agent-admin` | 750 | `agent-common`에 통과 권한 `x` |
+| `$AGENT_HOME` | `agent-admin:agent-common` | 750 | — |
+| `$AGENT_HOME/upload_files` | `agent-admin:agent-common` | 770 | `agent-common:rwx` 및 기본 ACL |
+| `$AGENT_HOME/api_keys` | `agent-admin:agent-core` | 770 | `agent-core:rwx` 및 기본 ACL |
+| `$AGENT_HOME/bin` | `agent-dev:agent-core` | 750 | — |
+| `$AGENT_HOME/bin/monitor.sh` | `agent-dev:agent-core` | 750 | — |
+| `/var/log/agent-app` | `agent-admin:agent-core` | 770 | `agent-core:rwx` 및 기본 ACL |
+
+</details>
 
 ### 애플리케이션 환경
 
