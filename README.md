@@ -180,7 +180,7 @@ sudo bash scripts/run-app.sh --stop
 | `AGENT_LOG_DIR` | `/var/log/agent-app` |
 | `AGENT_APP_BIN` | `$AGENT_HOME/agent-app-linux-x86` |
 
-로그인 셸은 `profile.d`를 통해, 최소 환경만 제공하는 cron은 `monitor.sh`가 환경 파일을 직접 읽는 방식으로 같은 값을 사용합니다.
+사용자가 로그인해 앱을 실행하면 `/etc/profile.d/agent-app.sh`에서 환경 변수를 불러옵니다. cron으로 자동 실행할 때는 로그인 과정이 없으므로 `monitor.sh`가 같은 파일을 직접 불러옵니다. 따라서 수동 실행과 자동 실행에서 동일한 설정을 사용합니다.
 
 ### 관제 정책
 
