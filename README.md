@@ -4,7 +4,7 @@
 
 > <b>서버 보호 → 사용자별 권한 분리 → 앱 실행 → 1분마다 상태 점검 → 로그 자동 정리</b>
 
-[빠른 실행](#빠른-실행) · [구성 요소와 동작](#구성-요소와-동작) · [검증 결과](#검증-결과) · [핵심 설계 결정](#핵심-설계-결정)
+[빠른 실행](#빠른-실행) · [구성 요소와 동작](#구성-요소와-동작) · [검증](#검증) · [핵심 설계 결정](#핵심-설계-결정)
 
 ---
 
@@ -194,85 +194,23 @@ sudo bash scripts/run-app.sh --stop
 
 ---
 
-## 검증 결과
+## 검증
 
-과제의 필수 항목과 추가 보존 정책을 모두 실제 명령어 출력으로 확인했습니다. 링크된 파일에는 요약되지 않은 원본 출력이 들어 있습니다.
+핵심 기능은 실제 환경에서 정상 동작과 실패 상황을 모두 확인했습니다. README에는 검증 범위만 요약하고, 전체 명령어 출력은 [`logs/`](./logs)에 분리했습니다.
 
-| # | 확인 항목 | 결과 | 원본 증거 |
-|:-:|-----------|:----:|-----------|
-| 1 | SSH 포트 변경과 Root 원격 접속 차단 | 완료 | [01-ssh.txt](./logs/01-ssh.txt) |
-| 2 | UFW 활성화와 허용 포트 제한 | 완료 | [02-firewall.txt](./logs/02-firewall.txt) |
-| 3 | 계정·그룹 생성 | 완료 | [03-accounts.txt](./logs/03-accounts.txt) |
-| 4 | 디렉토리 권한·ACL·접근 차단 | 완료 | [04-permissions.txt](./logs/04-permissions.txt) |
-| 5 | 앱 Boot Sequence 5단계와 `Agent READY` | 완료 | [05-boot-sequence.txt](./logs/05-boot-sequence.txt) |
-| 6 | 관제 실행과 모든 경고 분기 | 완료 | [06-monitor-run.txt](./logs/06-monitor-run.txt) |
-| 7 | `monitor.log` 누적 | 완료 | [07-monitor-log.txt](./logs/07-monitor-log.txt) |
-| 8 | crontab 등록과 자동 실행 | 완료 | [08-cron.txt](./logs/08-cron.txt) |
-| + | 10MB·10개 로그 보존 | 완료 | [09-log-rotation.txt](./logs/09-log-rotation.txt) |
+| 검증 범위 | 확인 내용 | 실행 기록 |
+|-----------|-----------|-----------|
+| 서버 보안 | SSH 포트 변경, Root 로그인 차단, 방화벽 허용 포트 제한 | [SSH](./logs/01-ssh.txt) · [방화벽](./logs/02-firewall.txt) |
+| 접근 제어 | 계정·그룹 생성, 공유 영역 접근, 보호 영역 차단 | [계정·그룹](./logs/03-accounts.txt) · [권한](./logs/04-permissions.txt) |
+| 앱 실행 | 부트 검사 5단계 통과, `Agent READY`, TCP `15034` 연결 대기 | [앱 부트](./logs/05-boot-sequence.txt) |
+| 시스템 관제 | 프로세스·포트·자원 측정, 임계값 경고, 실패 처리, 로그 누적 | [관제 실행](./logs/06-monitor-run.txt) · [관제 로그](./logs/07-monitor-log.txt) |
+| 자동 실행과 로그 관리 | cron 매분 실행, 10MB 기준 최대 10개 로그 보존 | [cron](./logs/08-cron.txt) · [로그 보존](./logs/09-log-rotation.txt) |
 
-### 주요 검증 요약
+전체 검증은 다음 명령으로 다시 실행할 수 있습니다. 앱 실행, 관제, cron 동작 확인, 앱 종료까지 약 3분이 걸립니다.
 
-<details>
-<summary><b>앱 부트와 포트 LISTEN</b></summary>
-
-```text
-[1/5] Checking User Account               [OK]
-[2/5] Verifying Environment Variables     [OK]
-[3/5] Checking Required Files             [OK]
-[4/5] Checking Port Availability          [OK]
-[5/5] Verifying Log Permission            [OK]
-All Boot Checks Passed!
-Agent READY
-
-tcp LISTEN 0 1 0.0.0.0:15034 0.0.0.0:*
+```bash
+sudo bash scripts/collect-evidence.sh
 ```
-
-</details>
-
-<details>
-<summary><b>접근 제어 실증</b></summary>
-
-| 시도 | 기대 | 결과 |
-|------|:----:|------|
-| `agent-test`가 `upload_files`에 파일 생성 | 허용 | 생성 성공, 기본 ACL 상속 |
-| `agent-test`가 `api_keys` 조회 | 차단 | `Permission denied` |
-| `agent-test`가 `monitor.log` 읽기 | 차단 | `Permission denied` |
-| `agent-dev`가 `secret.key` 읽기 | 허용 | 읽기 성공 |
-| `agent-test`가 `monitor.sh` 실행 | 차단 | `Permission denied` |
-
-</details>
-
-<details>
-<summary><b>관제 경고와 실패 분기</b></summary>
-
-| 분기 | 검증 방법 | 확인 결과 |
-|------|-----------|-----------|
-| CPU > 20% | 전 코어에 busy loop 주입 | CPU 경고 발생 |
-| MEM > 10% | 평상시 사용률로 확인 | 메모리 경고 발생 |
-| DISK > 80% | 테스트 시 임계값을 0%로 주입 | 디스크 경고 발생 |
-| 프로세스 없음 | `APP_NAME=no-such-app` 주입 | 실패 로그 후 `exit 1` |
-
-</details>
-
-<details>
-<summary><b>cron과 로그 보존</b></summary>
-
-`agent-admin`의 crontab에 아래 항목을 등록하고, 2분 30초 동안 로그가 두 번 추가되는 것을 확인했습니다.
-
-```cron
-* * * * * /home/agent-admin/agent-app/bin/monitor.sh >> /var/log/agent-app/cron.log 2>&1
-```
-
-로그가 10MB를 넘으면 현재 파일을 `.1`로 옮기고 기존 아카이브를 한 칸씩 밀어 `.9`까지 유지합니다.
-
-| 항목 | 실행 전 | 실행 후 |
-|------|---------|---------|
-| `monitor.log` | 11MB | 새 로그 파일 |
-| `monitor.log.1` | `archive-1` | 직전 11MB 파일 |
-| `monitor.log.9` | `archive-9` | `archive-8` |
-| 총 파일 수 | 10 | <b>10</b> |
-
-</details>
 
 ---
 
