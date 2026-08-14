@@ -138,7 +138,7 @@ sudo bash scripts/run-app.sh --stop
 | `agent-dev` | 관제 스크립트 작성·수정 | 소속 | 소속 |
 | `agent-test` | 업로드 기능 테스트 | 소속 | — |
 
-`agent-test`는 공유 업로드 영역만 사용할 수 있습니다. 키 파일, 관제 스크립트, 운영 로그는 `agent-core`에 속한 `agent-admin`과 `agent-dev`만 접근할 수 있습니다.
+`agent-common`은 세 계정이 함께 쓰는 업로드 영역에, `agent-core`는 admin과 dev만 사용하는 키·스크립트·로그 영역에 적용됩니다.
 
 #### 주요 디렉토리 권한
 
