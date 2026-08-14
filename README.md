@@ -4,7 +4,7 @@
 
 > <b>서버 보호 → 사용자별 권한 분리 → 앱 실행 → 1분마다 상태 점검 → 로그 자동 정리</b>
 
-[빠른 실행](#빠른-실행) · [구성 요소와 동작](#구성-요소와-동작) · [검증](#검증) · [핵심 설계 결정](#핵심-설계-결정)
+[빠른 실행](#빠른-실행) · [구성과 배포](#구성과-배포) · [검증](#검증) · [핵심 설계 결정](#핵심-설계-결정)
 
 ---
 
@@ -104,20 +104,40 @@ sudo bash scripts/run-app.sh --stop
 
 ---
 
-## 구성 요소와 동작
+## 구성과 배포
 
-| 파일 | 역할 |
-|------|------|
+### 구성 요소와 역할
+
+| 저장소 경로 | 역할 |
+|-------------|------|
 | [`setup-security.sh`](./scripts/setup-security.sh) | SSH 접속 설정과 방화벽 정책 구성 |
 | [`setup-agent.sh`](./scripts/setup-agent.sh) | 계정·권한·환경 변수·앱·관제 스크립트·cron 배포 |
 | [`agent-env.sh`](./scripts/agent-env.sh) | 앱이 사용할 경로와 포트 정의 |
 | [`run-app.sh`](./scripts/run-app.sh) | `agent-admin` 계정으로 앱 실행·종료 |
 | [`monitor.sh`](./scripts/monitor.sh) | 앱 상태와 서버 자원을 점검하고 로그 기록 |
 | [`collect-evidence.sh`](./scripts/collect-evidence.sh) | 전체 검증 과정을 실행하고 결과 수집 |
+| [`agent-app/`](./agent-app) | 제공된 x86·ARM64 애플리케이션 바이너리 보관 |
+| [`logs/`](./logs) | 검증 과정에서 수집한 실행 기록 보관 |
+
+### 실행 흐름
 
 ```text
 보안 설정 → 계정·앱 배포 → 앱 실행 → cron이 monitor.sh를 매분 실행 → 로그 기록·정리
 ```
+
+### 서버 배포 경로
+
+스크립트를 실행하면 저장소의 설정과 파일이 다음 경로에 적용됩니다.
+
+| 서버 경로 | 내용 |
+|-----------|------|
+| `/etc/ssh/sshd_config` | SSH 포트와 Root 로그인 정책 |
+| `/etc/profile.d/agent-app.sh` | `AGENT_*` 환경 변수 |
+| `/home/agent-admin/agent-app/` | 앱, 업로드·키·스크립트 디렉토리 |
+| `/home/agent-admin/agent-app/bin/monitor.sh` | 배포된 관제 스크립트 |
+| `/var/log/agent-app/monitor.log` | 관제 로그 |
+| `/var/log/agent-app/cron.log` | cron 실행 결과 |
+| `/var/spool/cron/crontabs/agent-admin` | 매분 관제 실행 설정 |
 
 ### 보안과 권한 정책
 
@@ -290,34 +310,6 @@ AGENT_LOG_DIR=/tmp/rotate-demo DISK_THRESHOLD=0 monitor.sh
 </details>
 
 ---
-
-## 저장소 구조
-
-```text
-B1-1.linux-system-monitor/
-├── scripts/
-│   ├── setup-security.sh      # SSH 하드닝·UFW 구성
-│   ├── setup-agent.sh         # 계정·권한·환경·앱·cron 구성
-│   ├── agent-env.sh           # AGENT_* 환경 변수 정의
-│   ├── monitor.sh             # 시스템 관제 스크립트
-│   ├── run-app.sh             # 앱 실행·종료
-│   └── collect-evidence.sh    # 증거 자료 일괄 수집
-├── logs/                      # 검증 원본 9종
-├── agent-app/                 # 제공된 x86·ARM64 바이너리
-└── README.md
-```
-
-## 배포 경로
-
-| 경로 | 내용 |
-|------|------|
-| `/etc/ssh/sshd_config` | SSH 포트와 Root 로그인 정책 |
-| `/etc/profile.d/agent-app.sh` | `AGENT_*` 환경 변수 |
-| `/home/agent-admin/agent-app/` | 앱, 업로드·키·스크립트 디렉토리 |
-| `/home/agent-admin/agent-app/bin/monitor.sh` | 배포된 관제 스크립트 |
-| `/var/log/agent-app/monitor.log` | 관제 로그 |
-| `/var/log/agent-app/cron.log` | cron 표준 출력 |
-| `/var/spool/cron/crontabs/agent-admin` | 매분 실행 설정 |
 
 ## 주의 사항
 
