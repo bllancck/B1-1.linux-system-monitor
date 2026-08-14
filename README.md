@@ -60,7 +60,7 @@ sudo bash scripts/setup-security.sh
 sudo bash scripts/setup-agent.sh
 ```
 
-> 두 스크립트는 다시 실행해도 같은 설정으로 수렴합니다.
+> 이미 설정을 마친 뒤 다시 실행해도 계정이나 방화벽 규칙이 중복으로 추가되지 않으며, 기존 설정이 같은 상태로 유지됩니다.
 
 #### 2. 애플리케이션 실행
 
