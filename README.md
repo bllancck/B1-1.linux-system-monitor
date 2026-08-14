@@ -243,7 +243,7 @@ sudo bash scripts/collect-evidence.sh
 
 `Port`는 마지막 값으로 단순 덮어쓰기 되는 설정이 아니라 여러 포트를 동시에 열 수 있는 누적 지시자입니다. 기존 `Port 22`를 남기고 `Port 20022`만 추가하면 두 포트가 모두 열리므로, 기존 `Port`와 `PermitRootLogin` 줄을 제거한 뒤 원하는 값을 한 번만 기록했습니다.
 
-Ubuntu의 소켓 활성화 환경에서는 `systemd`가 SSH 포트를 먼저 엽니다. `sshd_config`를 바꾼 뒤 `systemctl daemon-reload` 없이 서비스만 재시작하면 이전 포트를 계속 들을 수 있어, 문법 검사 후 데몬 설정을 다시 읽고 `ssh.socket`을 재시작합니다.
+이 Ubuntu 환경에서는 `systemd`가 SSH 연결을 먼저 받습니다. 따라서 `sshd_config`에서 포트를 바꿔도 `systemd`가 이전 포트 설정을 계속 사용할 수 있습니다. 설정 문법을 검사한 뒤 `systemctl daemon-reload`로 변경 내용을 다시 읽고, `ssh.socket`을 재시작해 새 포트를 적용했습니다.
 
 포트 변경은 자동 스캔 노출을 줄이는 조치이지 인증 강화 자체는 아닙니다. 따라서 최고 권한 계정의 직접 인증을 막는 `PermitRootLogin no`를 함께 적용했습니다.
 
