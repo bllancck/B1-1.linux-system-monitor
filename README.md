@@ -22,7 +22,9 @@
 
 **실행 환경:** Ubuntu 24.04.4 LTS (WSL2, systemd) · x86_64 · Bash · UFW · cron · POSIX ACL
 
-### 실제 관제 결과
+---
+
+## 관제 결과 예시
 
 ```text
 ====== SYSTEM MONITOR RESULT ======
