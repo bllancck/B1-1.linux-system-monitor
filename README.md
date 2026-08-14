@@ -1,32 +1,28 @@
-# Linux 시스템 관제 자동화
+# Linux 서버 보안 및 관제 자동화
 
-Ubuntu 서버의 보안 설정부터 권한 분리, 애플리케이션 배포, 상태 관제, cron 자동 실행과 로그 보존까지 하나의 운영 흐름으로 구성한 프로젝트입니다. 모든 설정은 Bash 스크립트로 재현할 수 있으며, 주요 결과는 명령어 출력으로 검증했습니다.
+리눅스 서버에서 애플리케이션을 **안전하게 실행하고, 정상 동작하는지 계속 확인하는 과정**을 자동화한 프로젝트입니다. 서버 보안과 사용자 권한을 설정하고, 앱의 프로세스·포트·자원 사용량을 매분 점검해 로그로 남깁니다.
 
-> **핵심 결과:** SSH·방화벽 하드닝, 역할 기반 접근 제어, 프로세스·포트 Health Check, CPU·메모리·디스크 수집, 임계값 경고, 매분 자동 실행, 10MB × 10개 로그 보존을 구현했습니다.
+> **서버 보호 → 사용자별 권한 분리 → 앱 실행 → 1분마다 상태 점검 → 로그 자동 정리**
 
-[빠른 실행](#빠른-실행) · [동작 구조](#동작-구조) · [검증 결과](#검증-결과) · [핵심 설계 결정](#핵심-설계-결정)
+[빠른 실행](#빠른-실행) · [구성 요소와 동작](#구성-요소와-동작) · [검증 결과](#검증-결과) · [핵심 설계 결정](#핵심-설계-결정)
 
 ---
 
-## 30초 요약
+## 프로젝트 한눈에 보기
 
-| 구분 | 구현 내용 |
-|------|-----------|
-| **보안** | SSH 포트 `20022`, Root 원격 접속 차단, UFW 기본 차단 후 `20022/tcp`·`15034/tcp`만 허용 |
-| **권한** | `agent-admin`·`agent-dev`·`agent-test` 역할 분리, 그룹과 ACL을 이용한 최소 권한 적용 |
-| **실행 환경** | `AGENT_*` 환경 변수 일원화, `agent-admin` 계정으로 애플리케이션 실행 |
-| **관제** | 프로세스·포트 확인 후 CPU·메모리·디스크 사용률 수집 및 임계값 경고 |
-| **자동화** | cron으로 매분 관제, `monitor.log`과 `cron.log`를 각각 10MB·10개까지 보존 |
-| **검증** | 정상·실패·경고·권한 차단·로그 로테이션을 직접 재현한 [증거 로그 9종](./logs) |
+| 순서 | 자동화한 일 | 결과 |
+|:----:|-------------|------|
+| 1 | **서버 보호** | SSH 접속 포트를 `20022`로 변경하고 Root 로그인을 막습니다. 방화벽은 SSH와 앱 포트만 엽니다. |
+| 2 | **권한 분리** | 운영자·개발자·테스트 계정을 나누고, 각 계정이 필요한 파일에만 접근하도록 제한합니다. |
+| 3 | **앱 실행** | 실행 환경을 한 곳에서 관리하고, Root가 아닌 `agent-admin` 계정으로 앱을 실행합니다. |
+| 4 | **상태 점검** | 앱 프로세스와 포트를 확인하고 CPU·메모리·디스크 사용률이 기준을 넘으면 경고합니다. |
+| 5 | **자동 관리** | 1분마다 상태를 점검하고, 로그가 커지면 오래된 파일부터 자동으로 정리합니다. |
 
-### 실행 환경
+모든 과정은 Bash 스크립트로 다시 실행할 수 있으며, 정상 동작과 실패 상황을 [9개의 원본 로그](./logs)로 검증했습니다.
 
-- Ubuntu 24.04.4 LTS, WSL2, systemd 활성화
-- x86_64, 8 vCPU, RAM 3,832MB
-- Bash, UFW, cron, POSIX ACL
-- 대상 앱: PyInstaller로 패키징된 `agent-app-linux-x86`
+**실행 환경:** Ubuntu 24.04.4 LTS (WSL2, systemd) · x86_64 · Bash · UFW · cron · POSIX ACL
 
-### 관제 실행 예시
+### 실제 관제 결과
 
 ```text
 ====== SYSTEM MONITOR RESULT ======
@@ -49,7 +45,7 @@ DISK Used  : 1%
 ## 빠른 실행
 
 > [!CAUTION]
-> `setup-security.sh`는 기존 UFW 규칙을 초기화하고 SSH 포트를 변경합니다. 원격 서버에서 실행할 때는 콘솔 접속 수단을 확보하고, 현재 SSH 세션이 끊길 가능성을 먼저 확인하세요. 기존 `sshd_config`는 타임스탬프가 붙은 파일로 백업됩니다.
+> `setup-security.sh`는 기존 방화벽 규칙을 초기화하고 SSH 포트를 변경합니다. 원격 서버에서는 현재 SSH 연결이 끊길 수 있으므로 콘솔 접속 수단을 먼저 확보하세요. 기존 SSH 설정은 자동으로 백업됩니다.
 
 저장소 루트에서 다음 순서로 실행합니다.
 
@@ -73,7 +69,7 @@ sudo su - agent-admin -c '$AGENT_HOME/bin/monitor.sh'
 sudo tail -f /var/log/agent-app/monitor.log
 ```
 
-전체 증거를 다시 수집하려면 아래 명령을 실행합니다. 앱 기동부터 cron 관찰, 종료까지 약 3분이 걸리며 기존 `logs/*.txt`를 갱신합니다.
+전체 검증 결과를 다시 수집하려면 아래 명령을 실행합니다. 약 3분이 걸리며 `logs/*.txt`를 갱신합니다.
 
 ```bash
 sudo bash scripts/collect-evidence.sh
@@ -89,21 +85,20 @@ sudo bash scripts/run-app.sh --stop
 
 ---
 
-## 동작 구조
+## 구성 요소와 동작
+
+| 파일 | 역할 |
+|------|------|
+| [`setup-security.sh`](./scripts/setup-security.sh) | SSH 접속 설정과 방화벽 정책 구성 |
+| [`setup-agent.sh`](./scripts/setup-agent.sh) | 계정·권한·환경 변수·앱·관제 스크립트·cron 배포 |
+| [`agent-env.sh`](./scripts/agent-env.sh) | 앱이 사용할 경로와 포트 정의 |
+| [`run-app.sh`](./scripts/run-app.sh) | `agent-admin` 계정으로 앱 실행·종료 |
+| [`monitor.sh`](./scripts/monitor.sh) | 앱 상태와 서버 자원을 점검하고 로그 기록 |
+| [`collect-evidence.sh`](./scripts/collect-evidence.sh) | 전체 검증 과정을 실행하고 결과 수집 |
 
 ```text
-setup-security.sh   SSH 하드닝 · UFW 정책
-        │
-setup-agent.sh      계정 · 그룹 · ACL · 환경 변수 · 앱 · monitor.sh · cron 배포
-        │
-run-app.sh          agent-admin 계정으로 앱 실행
-        │
-monitor.sh          Health Check → 자원 수집 → 경고 판정 → 로그 기록
-        │
-cron                매분 실행 · 로그 자동 보존
+보안 설정 → 계정·앱 배포 → 앱 실행 → cron이 monitor.sh를 매분 실행 → 로그 기록·정리
 ```
-
-소스: [`setup-security.sh`](./scripts/setup-security.sh) · [`setup-agent.sh`](./scripts/setup-agent.sh) · [`run-app.sh`](./scripts/run-app.sh) · [`monitor.sh`](./scripts/monitor.sh) · [`collect-evidence.sh`](./scripts/collect-evidence.sh)
 
 ### 보안과 권한 정책
 
