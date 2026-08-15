@@ -269,23 +269,7 @@ setfacl -m g:agent-common:x /home/agent-admin
 </details>
 
 <details>
-<summary><b>3. 명세와 바이너리의 키 경로 해석 차이를 함께 수용한 이유</b></summary>
-
-과제 명세는 `AGENT_KEY_PATH`를 `$AGENT_HOME/api_keys/t_secret.key`로 안내하지만, 제공된 바이너리는 이 값을 파일이 아닌 <b>디렉토리 경로</b>로 검사하고 그 안의 <b><code>secret.key</code></b>를 읽습니다.
-
-| 설정 | 앱의 실제 반응 |
-|------|----------------|
-| `$AGENT_HOME/api_keys/t_secret.key` | `Key Path Mismatch` |
-| `$AGENT_HOME/api_keys` | 환경 변수 검사 통과 |
-| `t_secret.key`만 생성 | `Missing File: secret.key` |
-| 올바른 `secret.key` 생성 | 키 파일 검사 통과 |
-
-실행에는 `$AGENT_HOME/api_keys/secret.key`를 사용하되, 명세와의 추적성을 위해 같은 내용의 `t_secret.key`도 함께 생성합니다.
-
-</details>
-
-<details>
-<summary><b>4. 관제 지표와 PID를 직접 판정한 이유</b></summary>
+<summary><b>3. 관제 지표와 PID를 직접 판정한 이유</b></summary>
 
 - <b>PID:</b> `pgrep -f`는 앱을 감싼 `su`와 `bash`까지 찾습니다. 커널의 15자 `comm` 이름과 정확히 일치하는 `pgrep -x`로 앱만 선택하고, PyInstaller의 부모·워커 2단 구조에서는 부모 프로세스를 대표 PID로 기록합니다.
 - <b>CPU:</b> `top -bn1`의 첫 값 대신 `/proc/stat`을 1초 간격으로 두 번 읽어 해당 구간의 사용률을 계산합니다.
@@ -296,7 +280,7 @@ setfacl -m g:agent-common:x /home/agent-admin
 </details>
 
 <details>
-<summary><b>5. cron 환경과 테스트용 환경 변수 주입을 모두 지원한 이유</b></summary>
+<summary><b>4. cron 환경과 테스트용 환경 변수 주입을 모두 지원한 이유</b></summary>
 
 cron에는 로그인 셸의 `AGENT_*` 변수가 전달되지 않으므로 `monitor.sh`가 환경 파일을 직접 읽습니다. 다만 무조건 덮어쓰면 테스트 값을 주입할 수 없기 때문에 <b>호출자가 지정한 값 → 환경 파일 값 → 스크립트 기본값</b> 순으로 우선순위를 정했습니다.
 
@@ -309,7 +293,7 @@ AGENT_LOG_DIR=/tmp/rotate-demo DISK_THRESHOLD=0 monitor.sh
 </details>
 
 <details>
-<summary><b>6. logrotate 대신 스크립트에서 보존 정책을 적용한 이유</b></summary>
+<summary><b>5. logrotate 대신 스크립트에서 보존 정책을 적용한 이유</b></summary>
 
 `monitor.sh`는 매분 실행되는 고정 진입점이므로 별도 스케줄을 추가하지 않고도 실행 전 로그 크기를 확인할 수 있습니다. 관제 결과인 `monitor.log`뿐 아니라 표준 출력이 쌓이는 `cron.log`에도 같은 정책을 적용해, 관제 기능 자체가 디스크를 채우는 일을 막았습니다.
 
@@ -320,7 +304,7 @@ AGENT_LOG_DIR=/tmp/rotate-demo DISK_THRESHOLD=0 monitor.sh
 ## 주의 사항
 
 - 앱은 Root 실행을 거부하므로 `agent-admin` 계정으로 실행해야 합니다.
-- `AGENT_KEY_PATH`는 키 파일이 아니라 키 디렉토리를 가리켜야 합니다.
+- `AGENT_KEY_PATH`는 키 파일이 아니라 키 디렉토리를 가리켜야 합니다. 앱이 이 경로 아래에서 `secret.key`를 찾기 때문입니다.
 - 앱을 중복 기동하면 TCP `15034` 포트 점유 검사에서 실패합니다.
 - 앱이 내려간 동안에도 cron은 매분 실행되며 `[FAIL]` 로그를 남깁니다. 로그 크기는 보존 정책으로 제한됩니다.
 - 이 프로젝트의 계정·그룹·ACL·로그 디렉토리는 [B1-2](../B1-2.linux-troubleshooting)에서도 재사용합니다.
