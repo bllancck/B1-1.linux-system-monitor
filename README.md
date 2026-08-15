@@ -284,9 +284,13 @@ AGENT_LOG_DIR=/tmp/rotate-demo DISK_THRESHOLD=0 monitor.sh
 </details>
 
 <details>
-<summary><b>4. logrotate 대신 스크립트에서 보존 정책을 적용한 이유</b></summary>
+<summary><b>4. 별도 logrotate 없이 스크립트에서 로그를 관리한 이유</b></summary>
 
-`monitor.sh`는 매분 실행되는 고정 진입점이므로 별도 스케줄을 추가하지 않고도 실행 전 로그 크기를 확인할 수 있습니다. 관제 결과인 `monitor.log`뿐 아니라 표준 출력이 쌓이는 `cron.log`에도 같은 정책을 적용해, 관제 기능 자체가 디스크를 채우는 일을 막았습니다.
+`monitor.sh`는 `cron`에 의해 매분 실행되기 때문에, 실행 결과가 로그 파일에 계속 쌓입니다. 로그를 그대로 두면 `monitor.log`와 `cron.log`의 크기가 계속 커져 디스크 공간을 많이 차지할 수 있습니다.
+
+이를 막기 위해 `monitor.sh`가 실행될 때마다 로그 크기를 확인하고, 일정 기준을 넘으면 오래된 로그를 정리하도록 했습니다. `monitor.sh` 자체가 매분 실행되므로 로그 정리를 위한 별도의 `logrotate` 일정도 추가할 필요가 없습니다.
+
+즉, **모니터링 과정에서 만들어지는 로그가 무한정 쌓여 디스크를 차지하지 않도록, 로그 관리 기능을 `monitor.sh` 안에 함께 넣었습니다.**
 
 </details>
 
