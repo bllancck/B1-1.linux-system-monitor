@@ -24,7 +24,10 @@
 
 - **검증 환경:** Ubuntu 24.04.4 LTS (WSL2, systemd) · x86_64 · Bash · UFW · cron · POSIX ACL
 - **권장 환경:** Ubuntu 22.04 LTS 이상 · systemd 활성화 · x86_64
-- **비권장 환경:** Docker 컨테이너 · systemd가 비활성화된 WSL · macOS · Git Bash
+- **비권장 환경:**
+  - **Docker 컨테이너:** 일반적인 컨테이너에는 systemd·SSH·UFW·cron 서비스가 없거나 제한되어 전체 자동화 흐름을 그대로 실행하기 어렵습니다.
+  - **systemd가 비활성화된 WSL:** `systemctl`을 이용한 SSH·UFW·cron 서비스 시작과 재시작이 동작하지 않습니다.
+  - **macOS·Git Bash:** Linux용 사용자·그룹·ACL과 UFW·systemd 명령 및 파일 경로가 호환되지 않습니다.
 - **미검증 환경:** Debian 계열의 다른 배포판 · ARM64
 
 > x86_64와 ARM64용 앱 바이너리를 모두 제공하지만, 현재 배포·실행·검증 스크립트는 x86_64 바이너리를 기준으로 작성되어 있습니다. ARM64 환경에서는 스크립트의 바이너리 설정을 변경해야 합니다.
