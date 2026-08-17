@@ -12,11 +12,11 @@
 
 | 순서 | 자동화한 일 | 검증 범위 | 결과 및 확인 내용 | 실행 기록 |
 |:----:|-------------|-----------|-------------------|-----------|
-| 1 | <b>서버 보호</b> | 서버 보안 | SSH 포트를 `20022`로 변경하고 Root 로그인을 차단했습니다. 방화벽은 SSH `20022`와 앱 `15034`만 허용합니다. | [SSH](./logs/01-ssh.txt) · [방화벽](./logs/02-firewall.txt) |
-| 2 | <b>권한 분리</b> | 접근 제어 | 운영자·개발자·테스트 계정과 그룹을 구성하고, 공유 영역 접근과 보호 영역 차단을 확인했습니다. | [계정·그룹](./logs/03-accounts.txt) · [권한](./logs/04-permissions.txt) |
-| 3 | <b>앱 실행</b> | 애플리케이션 실행 | `agent-admin` 계정으로 앱을 실행해 부트 검사 5단계, `Agent READY`, TCP `15034` 연결 대기를 확인했습니다. | [앱 부트](./logs/05-boot-sequence.txt) |
-| 4 | <b>상태 점검</b> | 시스템 관제 | 프로세스·포트·자원 사용량 측정과 임계값 경고, 실패 처리, 로그 누적을 확인했습니다. | [관제 실행](./logs/06-monitor-run.txt) · [관제 로그](./logs/07-monitor-log.txt) |
-| 5 | <b>자동 관리</b> | 자동 실행과 로그 관리 | cron의 1분 주기 실행과 10MB 기준 최대 10개 로그 보존을 확인했습니다. | [cron](./logs/08-cron.txt) · [로그 보존](./logs/09-log-rotation.txt) |
+| 1 | **[서버 보호](./scripts/setup-security.sh)** | 서버 보안 | SSH 포트를 `20022`로 변경하고 Root 로그인을 차단했습니다. 방화벽은 SSH `20022`와 앱 `15034`만 허용합니다. | [SSH](./logs/01-ssh.txt) · [방화벽](./logs/02-firewall.txt) |
+| 2 | **[권한 분리](./scripts/setup-agent.sh)** | 접근 제어 | 운영자·개발자·테스트 계정과 그룹을 구성하고, 공유 영역 접근과 보호 영역 차단을 확인했습니다. | [계정·그룹](./logs/03-accounts.txt) · [권한](./logs/04-permissions.txt) |
+| 3 | **[앱 실행](./scripts/run-app.sh)** | 애플리케이션 실행 | `agent-admin` 계정으로 앱을 실행해 부트 검사 5단계, `Agent READY`, TCP `15034` 연결 대기를 확인했습니다. | [앱 부트](./logs/05-boot-sequence.txt) |
+| 4 | **[상태 점검](./scripts/monitor.sh)** | 시스템 관제 | 프로세스·포트·자원 사용량 측정과 임계값 경고, 실패 처리, 로그 누적을 확인했습니다. | [관제 실행](./logs/06-monitor-run.txt) · [관제 로그](./logs/07-monitor-log.txt) |
+| 5 | **[자동 실행](./scripts/setup-agent.sh) · [로그 관리](./scripts/monitor.sh)** | 자동 실행과 로그 관리 | cron의 1분 주기 실행과 10MB 기준 최대 10개 로그 보존을 확인했습니다. | [cron](./logs/08-cron.txt) · [로그 보존](./logs/09-log-rotation.txt) |
 
 전체 검증은 다음 명령으로 다시 실행할 수 있습니다. 앱 실행, 관제, cron 동작 확인, 앱 종료까지 약 3분이 걸립니다.
 
