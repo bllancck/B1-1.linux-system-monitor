@@ -295,6 +295,6 @@ AGENT_LOG_DIR=/tmp/rotate-demo DISK_THRESHOLD=0 monitor.sh
 
 - 앱은 Root 실행을 거부하므로 `agent-admin` 계정으로 실행해야 합니다.
 - `AGENT_KEY_PATH`는 키 파일이 아니라 키 디렉토리를 가리켜야 합니다. 앱이 이 경로 아래에서 `secret.key`를 찾기 때문입니다.
-- 앱을 중복 기동하면 TCP `15034` 포트 점유 검사에서 실패합니다.
+- 앱을 중복 기동하면 `Port 15034 is already in use` 오류와 함께 부트 검사가 중단됩니다. [포트 점유 프로세스 확인과 안전한 복구 방법](./docs/port-conflict.md)을 참고하세요.
 - 앱이 내려간 동안에도 cron은 매분 실행되며 `[FAIL]` 로그를 남깁니다. 로그 크기는 보존 정책으로 제한됩니다.
 - 이 프로젝트의 계정·그룹·ACL·로그 디렉토리는 [B1-2](../B1-2.linux-troubleshooting)에서도 재사용합니다.
