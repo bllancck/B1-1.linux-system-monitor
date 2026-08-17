@@ -141,17 +141,18 @@ sudo bash scripts/run-app.sh --stop
 
 ### 서버 배포 경로
 
-스크립트를 실행하면 저장소의 설정과 파일이 다음 경로에 적용됩니다.
+`setup-security.sh`와 `setup-agent.sh`를 실행하면 저장소의 파일을 서버 경로로 복사하거나, 서버 설정과 디렉터리를 직접 생성·수정합니다. 이후 `monitor.sh`가 실행되면 관제 로그가 생성됩니다.
 
-| 서버 경로 | 내용 |
-|-----------|------|
-| `/etc/ssh/sshd_config` | SSH 포트와 Root 로그인 정책 |
-| `/etc/profile.d/agent-app.sh` | `AGENT_*` 환경 변수 |
-| `/home/agent-admin/agent-app/` | 앱, 업로드·키·스크립트 디렉토리 |
-| `/home/agent-admin/agent-app/bin/monitor.sh` | 배포된 관제 스크립트 |
-| `/var/log/agent-app/monitor.log` | 관제 로그 |
-| `/var/log/agent-app/cron.log` | cron 실행 결과 |
-| `/var/spool/cron/crontabs/agent-admin` | 매분 관제 실행 설정 |
+| 실행 스크립트 | 저장소 원본 | 서버 적용 경로 | 적용 내용 |
+|---------------|-------------|----------------|-----------|
+| [`setup-security.sh`](./scripts/setup-security.sh) | 직접 수정 | `/etc/ssh/sshd_config` | 기존 설정을 백업하고 SSH 포트를 `20022`로 변경한 뒤 Root 원격 로그인을 차단 |
+| [`setup-security.sh`](./scripts/setup-security.sh) | 직접 설정 | UFW 정책 (`/etc/ufw/`) | 기존 규칙을 초기화하고 인바운드에서 `20022/tcp`, `15034/tcp`만 허용 |
+| [`setup-agent.sh`](./scripts/setup-agent.sh) | [`scripts/agent-env.sh`](./scripts/agent-env.sh) | `/etc/profile.d/agent-app.sh` | 앱 경로·포트·로그 위치 등 `AGENT_*` 환경 변수 배포 |
+| [`setup-agent.sh`](./scripts/setup-agent.sh) | [`agent-app/agent-app-linux-x86`](./agent-app/agent-app-linux-x86) | `/home/agent-admin/agent-app/agent-app-linux-x86` | 실행할 x86_64 앱 바이너리 배포 |
+| [`setup-agent.sh`](./scripts/setup-agent.sh) | [`scripts/monitor.sh`](./scripts/monitor.sh) | `/home/agent-admin/agent-app/bin/monitor.sh` | 관제 스크립트를 `agent-dev:agent-core`, 권한 `750`으로 배포 |
+| [`setup-agent.sh`](./scripts/setup-agent.sh) | 직접 생성 | `/home/agent-admin/agent-app/upload_files`<br>`/home/agent-admin/agent-app/api_keys`<br>`/var/log/agent-app` | 공유·보호·로그 디렉터리와 권한을 구성하고 API 키 파일 생성 |
+| [`setup-agent.sh`](./scripts/setup-agent.sh) | 직접 등록 | `/var/spool/cron/crontabs/agent-admin` | `agent-admin` 계정으로 `monitor.sh`를 1분마다 실행하도록 등록 |
+| [`monitor.sh`](./scripts/monitor.sh) 및 cron | 실행 중 생성 | `/var/log/agent-app/monitor.log`<br>`/var/log/agent-app/cron.log` | 관제 측정값과 cron 실행 결과를 각각 누적 기록 |
 
 ### 보안과 권한 정책
 
